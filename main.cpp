@@ -306,7 +306,6 @@ void signal_handler(int signal) {
     log_message("Получен сигнал завершения");
 }
 
-// Упрощенный поток ввода без condition_variable
 void input_thread() {
     std::string line;
     while (running) {
@@ -317,7 +316,7 @@ void input_thread() {
                 has_input = true;
             }
         }
-        // Небольшая задержка для снижения нагрузки
+ 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
@@ -374,7 +373,7 @@ void run(int child_mode = 0) {
         return;
     }
     
-    // Запускаем поток ввода
+
     std::thread input_th(input_thread);
     
     auto last_increment = std::chrono::steady_clock::now();
@@ -384,11 +383,11 @@ void run(int child_mode = 0) {
     while (running) {
         auto now = std::chrono::steady_clock::now();
         
-        // Обработка пользовательского ввода
+
         if (has_input.exchange(false)) {
             std::lock_guard<std::mutex> lock(input_mutex);
             try {
-                // Поддерживаем два формата: просто число или "set число"
+        
                 std::istringstream iss(input_command);
                 std::string first_word;
                 iss >> first_word;
@@ -397,7 +396,7 @@ void run(int child_mode = 0) {
                 if (first_word == "set") {
                     iss >> new_value;
                 } else {
-                    // Попробуем распарсить как число
+                
                     new_value = std::stoi(first_word);
                 }
                 
@@ -411,7 +410,7 @@ void run(int child_mode = 0) {
             }
         }
         
-        // Увеличение счётчика каждые 300 мс
+ 
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_increment).count() >= 300) {
             lock_shared();
             shared->counter++;
@@ -422,7 +421,7 @@ void run(int child_mode = 0) {
             last_increment = now;
         }
         
-        // Запись в лог каждую секунду (только мастер-процесс)
+  
         lock_shared();
         bool is_master = shared->is_master;
         int counter_value = shared->counter;
@@ -433,7 +432,7 @@ void run(int child_mode = 0) {
             last_log = now;
         }
         
-        // Запуск копий каждые 3 секунды (только мастер-процесс)
+
         if (is_master && std::chrono::duration_cast<std::chrono::milliseconds>(now - last_child_launch).count() >= 3000) {
             check_child_completion(1);
             check_child_completion(2);
